@@ -1,17 +1,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import label as label_image
-
-from skimage.segmentation import clear_border
+from icecream import ic
 from skimage import exposure
 from scipy.ndimage.morphology import binary_fill_holes
-import matplotlib.pyplot as plt
-import data_manager as dm
 from skimage.filters import median
 
-from data_manager import save_plot as save
+import data_manager as dm
 from helper import crop, paste
-from icecream import ic
 
 
 VOXEL_SIZE = 9 * 1e-6
@@ -87,8 +83,7 @@ def get_small_pores_mask(img2d_gray,
         for y in np.arange(count_of_center_points) + 0.5:
             center_coords = np.ceil(np.asarray([x, y]) * window_size).astype(int)
             img2d_gray_frag = crop(img2d_gray, (window_size, window_size), center_coords)
-            
-            # new approach
+
             img2d_gray_frag = median(img2d_gray_frag)
 
             min_brightness = np.min(img2d_gray_frag)
