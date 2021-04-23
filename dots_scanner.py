@@ -73,15 +73,16 @@ def get_small_pores_mask(img2d_gray,
         print("deleting remnants")
 
     # количество маленьких окошек
-    count_of_center_points = np.min(img2d_gray.shape) // window_size
+    count_of_center_points_x, count_of_center_points_y = np.array(img2d_gray.shape) // window_size
 
     # выкидываем из изображения все, что вне окошек при их максимальном количестве,
     # оставляем frame. Т.е. на случай, если окошки не делят изображения нацело
-    frame_shape = [count_of_center_points*window_size]*2
+    frame_shape = [count_of_center_points_x*window_size,
+                   count_of_center_points_y*window_size]
     mask_frame = np.zeros(frame_shape, dtype=int)
 
-    for x in np.arange(count_of_center_points) + 0.5:
-        for y in np.arange(count_of_center_points) + 0.5:
+    for x in np.arange(count_of_center_points_x) + 0.5:
+        for y in np.arange(count_of_center_points_y) + 0.5:
             center_coords = np.ceil(np.asarray([x, y]) * window_size).astype(int)
             img2d_gray_frag = crop(img2d_gray, (window_size, window_size), center_coords)
 
