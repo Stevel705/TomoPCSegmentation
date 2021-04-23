@@ -1,5 +1,7 @@
 import os
 import re
+import json
+from pathlib import Path
 
 from PIL import Image
 import h5py
@@ -78,5 +80,15 @@ def get_img2d_from_database(file_name):
     path = os.path.join(SCRIPT_PATH, DATABASE_FOLDER_NAME, file_name)
 
     img2d_gray = np.array(Image.open(path))
+
+    return img2d_gray
+
+
+def get_img2d_from_server(sample_name, num_of_slice):
+    data_folder = json.load(open('recon_server_paths.json'))[sample_name]
+    file_names = Path(data_folder).glob('*.tif')
+    file_names = list(file_names)
+
+    img2d_gray = np.array(Image.open(file_names[num_of_slice]))
 
     return img2d_gray
