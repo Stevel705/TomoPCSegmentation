@@ -61,7 +61,7 @@ def save_dataframe(df, file_name):
         raise ValueError(f"file_name must consist .csv or .xlsx")
 
 
-def load_datafrme(csv_file_name):
+def load_dataframe(csv_file_name):
     """ загружает csv файл
     csv_file_name : str defaut "train_dataframe.csv"
         Название csv файла
@@ -76,8 +76,11 @@ def load_datafrme(csv_file_name):
     return pd.read_csv(file_path, sep=DEFAULT_SEP, decimal=DEFAULT_DECIMAL)
 
 
-def get_img2d_from_database(file_name):
-    path = os.path.join(SCRIPT_PATH, DATABASE_FOLDER_NAME, file_name)
+def get_img2d_from_database(file_name, folder_name=None):
+    if folder_name:
+        path = os.path.join(SCRIPT_PATH, DATABASE_FOLDER_NAME, folder_name, file_name)
+    else:
+        path = os.path.join(SCRIPT_PATH, DATABASE_FOLDER_NAME, file_name)
 
     img2d_gray = np.array(Image.open(path))
 
@@ -92,3 +95,21 @@ def get_img2d_from_server(sample_name, num_of_slice):
     img2d_gray = np.array(Image.open(file_names[num_of_slice]))
 
     return img2d_gray
+
+
+def save_tif(img2d, folder_name, name):
+    save_path = os.path.join(SCRIPT_PATH, DATABASE_FOLDER_NAME)
+    if not os.path.isdir(save_path):
+        os.mkdir(save_path)
+    save_path = os.path.join(save_path, folder_name)
+
+    if not os.path.isdir(save_path):
+        os.mkdir(save_path)
+    save_path = os.path.join(save_path, name)
+
+    if os.path.isfile(save_path):
+        os.remove(save_path)
+    
+
+    img2d = Image.fromarray(img2d)
+    img2d.save(save_path+'.tif')
