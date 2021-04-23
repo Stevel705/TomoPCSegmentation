@@ -8,6 +8,7 @@ from skimage.filters import median
 
 import data_manager as dm
 from helper import crop, paste
+import viewer
 
 
 VOXEL_SIZE = 9 * 1e-6
@@ -55,7 +56,7 @@ def _create_mask_layer_for_label(labeled_img, label):
 
 def get_small_pores_mask(img2d_gray,
                          mask,
-                         percentile=2.5,
+                         percentile_glob=2.5,
                          min_large_contour_length=2000,
                          window_size=200):
 
@@ -63,7 +64,7 @@ def get_small_pores_mask(img2d_gray,
     large_clusters_mask = find_big_ones_clusters(mask,
                                                  min_large_contour_length)
     img2d_gray = hide_image_elements(img2d_gray, large_clusters_mask) 
-    global_thresh = np.percentile(img2d_gray.ravel(), percentile)
+    global_thresh = np.percentile(img2d_gray.ravel(), percentile_glob)
 
     check_mask = find_big_ones_clusters(img2d_gray > global_thresh, min_large_contour_length)
     while np.any(check_mask):
@@ -114,12 +115,13 @@ if __name__=='__main__':
     fig, axes = plt.subplots(ncols=2, nrows=2, figsize=(14, 14), constrained_layout=True)
     axes = axes.flatten()
 
+    clip_limit = 0.1
     
-    img2d_mask = thresh(exposure.equalize_adapthist(img2d, clip_limit=0.1))
+    img2d_mask = thresh(exposure.equalize_adapthist(img2d, clip_limit=clip_limit))
 
     img2d_mask = get_small_pores_mask(img2d,
                                  img2d_mask,
-                                 percentile=97.5,
+                                 percentile_glob=97.5,
                                  min_large_contour_length=1000,
                                  window_size=200)
 
@@ -127,20 +129,20 @@ if __name__=='__main__':
     squares = [([500, 1500], [600,1500]),
                ([900, 1200], [900,1200])]
     axes[0].imshow(img2d, cmap='gray')
-    view_applied_rectangle(img2d, *squares[0], axes[0], color='red')
-    view_applied_rectangle(img2d, *squares[1], axes[0], color='green')
+    viewer.view_applied_rectangle(img2d, *squares[0], axes[0], color='red')
+    viewer.view_applied_rectangle(img2d, *squares[1], axes[0], color='green')
     axes[0].set_title("original image")
 
     #axes[1].imshow(exposure.equalize_adapthist(img2d, clip_limit=0.05), cmap='gray')
-    view_applied_mask(exposure.equalize_adapthist(img2d, clip_limit=0.05), img2d_mask, axes[1], alpha=1)
-    view_applied_rectangle(img2d, *squares[0], axes[1], color='red')
-    view_applied_rectangle(img2d, *squares[1], axes[1], color='green')
+    viewer.view_applied_mask(exposure.equalize_adapthist(img2d, clip_limit=clip_limit), img2d_mask, axes[1], alpha=1)
+    viewer.view_applied_rectangle(img2d, *squares[0], axes[1], color='red')
+    viewer.view_applied_rectangle(img2d, *squares[1], axes[1], color='green')
     axes[1].set_title("adaptive contrast")
 
-    view_region(exposure.equalize_adapthist(img2d, clip_limit=0.05), img2d_mask, axes[2], *squares[0])
+    viewer.view_region(exposure.equalize_adapthist(img2d, clip_limit=clip_limit), img2d_mask, axes[2], *squares[0])
     axes[2].set_title("RED box zoomed", fontdict={'color': 'red'})
 
-    view_region(img2d, img2d_mask, axes[3], *squares[1], alpha=0.3)
+    viewer.view_region(img2d, img2d_mask, axes[3], *squares[1], alpha=0.3)
     axes[3].set_title("GREEN box zoomed", fontdict={'color': 'green'})
     
     dm.save_plot(fig, "plots", "section")
