@@ -113,3 +113,13 @@ def save_tif(img2d, folder_name, name):
 
     img2d = Image.fromarray(img2d)
     img2d.save(save_path+'.tif')
+
+
+def generate_tif_file_name(num, add_extention_tif=False):
+    extention = ".tif" if add_extention_tif else ""
+    return "0" * (4-len(str(num))) + str(num) + extention
+
+
+def load_data(sample_name, num_of_files):
+    for k, fn in enumerate(range(*num_of_files)):
+        yield get_img2d_from_server(sample_name, fn), generate_tif_file_name(k)
