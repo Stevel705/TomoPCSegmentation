@@ -4,6 +4,7 @@ from tqdm import tqdm
 
 import data_manager as dm
 from helper import crop
+import viewer
 
 
 def preview(sample_name, n, contrast=True, server=True):
@@ -26,7 +27,7 @@ def preview(sample_name, n, contrast=True, server=True):
 
 def crop_cube(sample_name, shape_2d, center_2d, slice_numbers):
     n_slices = slice_numbers[1]-slice_numbers[0]
-    data = dm.load_data(sample_name, slice_numbers)
+    data = dm.load_data_server(sample_name, slice_numbers)
 
     for img, shot_name in tqdm(data, total=n_slices):
         img = crop(img, shape_2d, center=center_2d)
@@ -45,3 +46,6 @@ if __name__ == "__main__":
     slice_numbers = [1000, 1300]
 
     crop_cube(sample_name, shape_2d, center_2d, slice_numbers)
+    
+    # data = dm.load_data_database("crop_gecko_123438", 300)
+    # viewer.max_sections(data, "gecko_max_stacking", 20)

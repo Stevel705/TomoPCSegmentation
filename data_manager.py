@@ -120,6 +120,12 @@ def generate_tif_file_name(num, add_extention_tif=False):
     return "0" * (4-len(str(num))) + str(num) + extention
 
 
-def load_data(sample_name, num_of_files):
-    for k, fn in enumerate(range(*num_of_files)):
+def load_data_server(sample_name, numbers_of_files):
+    for k, fn in enumerate(range(*numbers_of_files)):
         yield get_img2d_from_server(sample_name, fn), generate_tif_file_name(k)
+
+
+def load_data_database(folder_name, count_of_files):
+    for i in range(count_of_files):
+        file_name = generate_tif_file_name(i, True)
+        yield get_img2d_from_database(file_name, folder_name), file_name
