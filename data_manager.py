@@ -90,7 +90,7 @@ def get_img2d_from_database(file_name, folder_name=None):
 def get_img2d_from_server(sample_name, num_of_slice):
     data_folder = json.load(open('recon_server_paths.json'))[sample_name]
     file_names = Path(data_folder).glob('*.tif')
-    file_names = list(file_names)
+    file_names = sorted(list(file_names))
 
     img2d_gray = np.array(Image.open(file_names[num_of_slice]))
 
