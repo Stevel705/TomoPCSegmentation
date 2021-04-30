@@ -41,9 +41,9 @@ if __name__ == "__main__":
     #     server = False
     #     preview(sample_name, num_of_slice, server=server)
 
-    shape_2d = [300, 300]
-    center_2d = [500, 650]
-    slice_numbers = [1000, 1300]
+    shape_2d = [600, 600]
+    center_2d = None#[400, 550]
+    slice_numbers = [0, 500]
 
     crop_cube(sample_name, shape_2d, center_2d, slice_numbers)
     
