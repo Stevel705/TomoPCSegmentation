@@ -121,6 +121,10 @@ def generate_tif_file_name(num, add_extention_tif=False):
 
 
 def load_data_server(sample_name, numbers_of_files):
+    if numbers_of_files=="all":
+        path = json.load(open('recon_server_paths.json'))[sample_name]
+        numbers_of_files = [0, len(os.listdir(path))]
+
     for k, fn in enumerate(range(*numbers_of_files)):
         yield get_img2d_from_server(sample_name, fn), generate_tif_file_name(k)
 
@@ -137,6 +141,16 @@ def load_data_database(folder_name, count_of_files="all"):
 
 def assemble_3d_database(folder_name):
     data = load_data_database(folder_name, count_of_files="all")
+    img3d = [img2d for img2d, _ in data]
+    
+    return np.array(img3d)
+
+
+def assemble_3d_server(sample_name, numbers_of_files):
+    """
+    e.g. numbers_of_files = [0,100]
+    """
+    data = load_data_server(sample_name, numbers_of_files)
     img3d = [img2d for img2d, _ in data]
     
     return np.array(img3d)
