@@ -8,6 +8,7 @@ from helper import crop
 import time
 
 import data_manager as dm
+import configures
 
 
 NUM_OF_TIF_SLICES = 500
@@ -28,17 +29,20 @@ def binarize_img(im, thrs1, thrs2, max_iter):
 
 
 if __name__ == "__main__":
-    num_of_slice = 1001
     sample = "gecko_123438"
 
-    step = 300
-    z_range = [300, 600]
-    coords = tuple([slice(300, 850), slice(300, 850)])
+    params = configures.InputParameters()
+    z_range = params.z_range
+    coords = params.coords_3d
 
     start_time = time.time()
     shot_names = [dm.generate_tif_file_name(n) for n in range(*z_range)]
 
-    image_3d = dm.assemble_3d_server(sample, z_range)[:, 350:950, 300:850]
+    image_3d = dm.assemble_3d_server(sample, z_range)
+    print(image_3d.shape)
+    
+    image_3d = image_3d[coords]
+    print(image_3d.shape)
 
     thrs1 = 0.000266 #np.percentile(image_3d.flat[::5], 95)
     thrs2 = -1.54e-05 # np.percentile(image_3d.flat[::5], 35)
