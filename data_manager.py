@@ -132,7 +132,7 @@ def load_data_server(sample_name, numbers_of_files):
 def load_data_database(folder_name, numbers_of_files="all"):
     if numbers_of_files=="all":
         path = os.path.join(SCRIPT_PATH, DATABASE_FOLDER_NAME, folder_name)
-        numbers_of_files = len(os.listdir(path))
+        numbers_of_files = [0, len(os.listdir(path))]
 
     for k in range(*numbers_of_files):
         file_name = generate_tif_file_name(k, True)
