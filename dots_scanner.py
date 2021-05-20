@@ -24,7 +24,8 @@ def hide_image_elements(img, bin_mask):
 
 
 def find_big_ones_clusters(bin_mask,
-                           min_cluster_length):
+                           min_cluster_length=None,
+                           min_cluster_order=None):
     labeled_mask, _ = label_image(bin_mask)
     cluster_labels, cluster_sizes = np.unique(labeled_mask,
                                                return_counts=True)
@@ -34,6 +35,7 @@ def find_big_ones_clusters(bin_mask,
     cluster_sizes = cluster_sizes[sorted_indexes]
     cluster_labels = cluster_labels[sorted_indexes]
 
+    min_cluster_length = cluster_sizes[min_cluster_order] if min_cluster_order else min_cluster_length
     big_clusters_indexes = cluster_sizes > min_cluster_length
 
     big_ones_cluster_labels = cluster_labels[big_clusters_indexes]
