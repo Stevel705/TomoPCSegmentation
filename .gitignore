@@ -1,3 +1,4 @@
-\plots
+plots/
 __pycache__
-\database
+database/
+data/
