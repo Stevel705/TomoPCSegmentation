@@ -1,4 +1,7 @@
 plots/
 __pycache__
+.vscode
 database/
 data/
+lightning_logs/
+version_*/
