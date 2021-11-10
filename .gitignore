@@ -1,3 +1,7 @@
-\plots
+plots/
 __pycache__
-\database
+.vscode
+database/
+data/
+lightning_logs/
+version_*/

@@ -1,66 +1,59 @@
+import os
 import numpy as np
-from tqdm import tqdm
-from skimage.segmentation import random_walker
-from porespy.filters import chunked_func
-from skimage.filters import median
-from skimage.morphology import ball
-from helper import crop
-import time
+# from torch_snippets import *
+from argparse import ArgumentParser
 
-import data_manager as dm
-import configures
+from UnetModule import UnetModule
+from pytorch_lightning import Trainer
+from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 
+from torchvision import transforms
+from pytorch_lightning import Trainer, seed_everything
+from pl_bolts.utils import _TORCHVISION_AVAILABLE
+from pl_bolts.utils.warnings import warn_missing_pkg
 
-NUM_OF_TIF_SLICES = 500
-count = 0
+if _TORCHVISION_AVAILABLE:
+    from torchvision import transforms as transforms
+else:  # pragma: no cover
+    warn_missing_pkg("torchvision")
 
+def main(hparams):
 
-def binarize_img(im, thrs1, thrs2, max_iter):
-    start_time = time.time()
-    markers = np.zeros_like(im)
-    markers[im > thrs1] = 1
-    markers[im < thrs2] = 2
-    t = random_walker(im, markers, beta=100)
-    global count
-    print("count", count, " of ", max_iter, f" %: {count/max_iter:.2f}" ,"| time (min): ", (time.time() - start_time) / 60)
-    count += 1
+    model = UnetModule(hparams.dataset, hparams.n_channels, hparams.n_classes)
+
+    os.makedirs(hparams.log_dir, exist_ok=True)
+    try:
+        log_dir = sorted(os.listdir(hparams.log_dir))[-1]
+    except IndexError:
+        log_dir = os.path.join(hparams.log_dir, 'version_0')
+
+    checkpoint_callback = ModelCheckpoint(
+        dirpath=os.path.join(log_dir, 'checkpoints'),
+        filename='{epoch}-{val_loss:.2f}',
+        save_last=True,
+        verbose=True,
+    )
     
-    return t<2
+    # stop_callback = EarlyStopping(
+    #     monitor='val_loss',
+    #     verbose=True,
+    # )
 
+    trainer = Trainer(
+        gpus=1,
+        max_epochs=20,
+        callbacks=[checkpoint_callback]
+    )
 
-if __name__ == "__main__":
-    sample = "gecko_123438"
+    trainer.fit(model)
 
-    params = configures.InputParameters()
-    z_range = params.z_range
-    coords = params.coords_3d
+if __name__ == '__main__':
+    parser = ArgumentParser(add_help=False)
+    parser.add_argument('--dataset', required=True)
+    parser.add_argument('--log_dir', default='lightning_logs')
+    parser.add_argument('--n_channels', type=int, default=1)
+    parser.add_argument('--n_classes', type=int, default=6)
 
-    start_time = time.time()
-    shot_names = [dm.generate_tif_file_name(n) for n in range(*z_range)]
-
-    image_3d = dm.assemble_3d_server(sample, z_range)
-    print(image_3d.shape)
+    hparams = parser.parse_args()
     
-    image_3d = image_3d[coords]
-    print(image_3d.shape)
-
-    thrs1 = 0.000266 #np.percentile(image_3d.flat[::5], 95)
-    thrs2 = -1.54e-05 # np.percentile(image_3d.flat[::5], 35)
-
-    image_3d = median(image_3d, selem=ball(1))
-    print(image_3d.shape)
-
-    divs = np.array(image_3d.shape) // np.array([20, 40, 40])
-    image_3d = chunked_func(func=binarize_img,
-                            im=image_3d,
-                            thrs1=thrs1,
-                            thrs2=thrs2,
-                            max_iter=divs[0]*divs[1]*divs[2],
-                            divs=divs,
-                            overlap=(3, 5, 5),
-                            cores=2)
-
-    for img2d, shot_name in tqdm(zip(image_3d, shot_names), total=len(image_3d)):
-        dm.save_tif(img2d, sample, shot_name)
-    end_time = time.time()
-    print("cumulative time (min): ", (end_time-start_time)/60)
+    main(hparams)
