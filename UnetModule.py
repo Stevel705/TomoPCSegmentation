@@ -9,21 +9,21 @@ import torch.nn.functional as F
 # import torchvision.transforms as transforms
 # from torch import optim
 from torch.utils.data import DataLoader, random_split
-# from torch.utils.data.distributed import DistributedSampler
 
 import pytorch_lightning as pl
+from torchmetrics.functional import dice_score
 
 from datasets.olfactory_bulb import OlfactoryBulbDataset
 from model.unet import UNet
+import numpy as np
 
 from utils import multiclass_dice_coeff
 
 def UnetLoss(preds, targets, ce, n_classes):
-    # preds = preds.squeeze(0)
-    targets = targets.squeeze(0)
+    # targets = targets.squeeze(0)
     ce_loss = ce(preds, targets)
+    
     acc = (torch.max(preds, 1)[1] == targets).float().mean()
-
     mask_true = F.one_hot(targets, n_classes).permute(0, 3, 1, 2).float()
     mask_pred = F.one_hot(preds.argmax(dim=1), n_classes).permute(0, 3, 1, 2).float()
     acc = multiclass_dice_coeff(mask_pred, mask_true)
@@ -38,33 +38,43 @@ class UnetModule(pl.LightningModule):
         self.n_channels = n_channels
         self.n_classes = n_classes
         self.bilinear = True
-        self.criterion =  nn.CrossEntropyLoss() if self.n_classes > 1 else \
-            nn.BCEWithLogitsLoss()
+        # self.criterion =  nn.CrossEntropyLoss() if self.n_classes > 1 else \
+        #     nn.BCEWithLogitsLoss()
 
-        self.loss = UnetLoss
+        # self.loss = UnetLoss
         self.net = UNet(n_channels=self.n_channels, n_classes=self.n_classes, bilinear=self.bilinear)
         self.save_hyperparameters()
 
     def training_step(self, batch, batch_nb):
         x, y = batch['image'], batch['mask']
-        y_hat = self.net.forward(x)
-        # loss = F.cross_entropy(y_hat, y) if self.n_classes > 1 else \
-        #     F.binary_cross_entropy_with_logits(y_hat, y)
-        loss, acc = self.loss(y_hat, y, self.criterion, self.n_classes)
+        y_hat = self.net(x)
+        # print(np.unique(y_hat.cpu().detach().numpy()), np.unique(y.cpu().detach().numpy()))
 
-        tensorboard_logs = {'train_loss': loss}
+        loss = F.cross_entropy(y_hat, y) if self.n_classes > 1 else \
+            F.binary_cross_entropy_with_logits(y_hat, y)
+
+        dice_acc = dice_score(y_hat, y)
+        # logs metrics for each training_step,
+        # and the average across the epoch, to the progress bar and logger
+        self.log("train_acc", dice_acc, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+
+        tensorboard_logs = {'train_loss': loss, "train_acc": dice_acc}
         return {'loss': loss, 'log': tensorboard_logs}
 
     def validation_step(self, batch, batch_nb):
         x, y = batch['image'], batch['mask']
-        y_hat = self.net.forward(x)
-        
-        loss, acc = self.loss(y_hat, y, self.criterion, self.n_classes)
+        y_hat = self.net(x)
 
-        # loss = F.cross_entropy(y_hat, y) if self.n_classes > 1 else \
-        #     F.binary_cross_entropy_with_logits(y_hat, y)
+        loss = F.cross_entropy(y_hat, y) if self.n_classes > 1 else \
+            F.binary_cross_entropy_with_logits(y_hat, y)
         
-        return {'val_loss': loss, "acc": acc}
+        dice_acc = dice_score(y_hat, y)
+        # logs metrics for each training_step,
+        # and the average across the epoch, to the progress bar and logger
+        self.log("val_acc", dice_acc, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        
+        tensorboard_logs = {'train_loss': loss, "train_acc": dice_acc}
+        return {'val_loss': loss, 'log': tensorboard_logs}
 
     def validation_end(self, outputs):
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
@@ -72,7 +82,7 @@ class UnetModule(pl.LightningModule):
         return {'avg_val_loss': avg_loss, 'log': tensorboard_logs}
 
     def configure_optimizers(self):
-        return torch.optim.RMSprop(self.parameters(), lr=0.001, weight_decay=1e-8)
+        return torch.optim.RMSprop(self.parameters(), lr=0.0001, weight_decay=1e-8)
 
     def __dataloader(self):
         dataset = self.dataset

@@ -80,25 +80,24 @@ class OlfactoryBulbDataset(Dataset):
             mask = TF.rotate(mask, degree)
 
         # ====================================
-        # image = np.array(image)
-        # # mask = np.array(mask)
+        image = np.array(image)
+        mask = np.array(mask)
 
-        # if len(image.shape) == 2:
-        #     image = np.expand_dims(image, axis=2)
+        if len(image.shape) == 2:
+            image = np.expand_dims(image, axis=2)
 
-        # # if len(mask.shape) == 2:
-        # #     mask = np.expand_dims(mask, axis=2)
-
-        # # HWC to CHW
-        # image = image.transpose((2, 0, 1))
-        # if image.max() > 1:
-        #     image = image / 255
-
-        # Transform to tensor
-        # image = torch.from_numpy(image).type(torch.FloatTensor)
-        image = TF.to_tensor(image).type(torch.FloatTensor)
-        mask = TF.to_tensor(mask).type(torch.LongTensor)
+        # HWC to CHW
+        image = image.transpose((2, 0, 1))
+        if image.max() > 1:
+            image = image / 255
         
+        # Transform to tensor
+        image = torch.from_numpy(image).type(torch.FloatTensor)
+        # image = TF.to_tensor(image).type(torch.FloatTensor)
+        # mask = TF.pil_to_tensor(mask).type(torch.LongTensor)
+        mask = torch.from_numpy(mask).type(torch.LongTensor)
+        # mask = torch.as_tensor(np.asarray(mask)).type(torch.LongTensor)
+        # print(np.unique(mask.cpu().detach().numpy()))
         return image, mask
 
     def __getitem__(self, idx):
@@ -106,8 +105,9 @@ class OlfactoryBulbDataset(Dataset):
         img = Image.open(self.img_list[idx])
         mask = Image.open(self.mask_list[idx])
 
+        
         img, mask = self.transform(img, mask, self.scale)
-
+        
         # trms = transforms.Compose([AddGaussianNoise(0., 0.0001)])
         return {
             'image': img,
