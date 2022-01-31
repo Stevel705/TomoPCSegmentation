@@ -43,7 +43,7 @@ def main(hparams):
 
     # Initialize a trainer
     logger = TensorBoardLogger(hparams.log_dir, name="my_model")
-    trainer = pl.Trainer(gpus=1, max_epochs=1, progress_bar_refresh_rate=20, logger=logger)
+    trainer = pl.Trainer(gpus=1, max_epochs=20, progress_bar_refresh_rate=20, logger=logger)
 
     # Train the model ⚡
     trainer.fit(model, train, val)

@@ -28,8 +28,12 @@ class LightningUnet(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         # --------------------------
         x, y = batch['image'], batch['mask']
-        mask_type = torch.float32 if self.n_classes == 1 else torch.long
-        y = y.type(mask_type)
+        if self.n_classes == 1:
+            mask_type = torch.float32
+            y = y.type(mask_type)
+        else:
+            mask_type = torch.long
+            y = y.type(mask_type).squeeze(0)
 
         y_pred = self.net(x)
         loss = self.criterion(y_pred, y)
@@ -51,8 +55,12 @@ class LightningUnet(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         # --------------------------
         x, y = batch['image'], batch['mask']
-        mask_type = torch.float32 if self.n_classes == 1 else torch.long
-        y = y.type(mask_type)
+        if self.n_classes == 1:
+            mask_type = torch.float32
+            y = y.type(mask_type)
+        else:
+            mask_type = torch.long
+            y = y.type(mask_type).squeeze(0)
 
         y_pred = self.net(x)
 

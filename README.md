@@ -69,9 +69,9 @@ Next, navigate to any file and run it.
 ```bash
 # run
 # for binary segmenation   
-python main.py --dataset data/binary/ --n_channels 1 --n_classes 1
+python main.py --dataset data/binary_data/ --n_channels 1 --n_classes 1
 # for multiclass segmenation
-python main.py --dataset data/binary/ --n_channels 1 --n_classes 6
+python main.py --dataset data/multiclass_data/ --n_channels 1 --n_classes 6
 ```
 
 ## Train
@@ -92,7 +92,7 @@ model = LightningUnet(hparams.n_channels, hparams.n_classes, hparams.learning_ra
 
 # Initialize a trainer
 logger = TensorBoardLogger(hparams.log_dir, name="my_model")
-trainer = pl.Trainer(gpus=1, max_epochs=1, progress_bar_refresh_rate=20, logger=logger)
+trainer = pl.Trainer(gpus=1, max_epochs=20, progress_bar_refresh_rate=20, logger=logger)
 
 # Train the model ⚡
 trainer.fit(model, train, val)
