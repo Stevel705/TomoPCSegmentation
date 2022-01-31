@@ -4,6 +4,7 @@ from torchvision import transforms
 import torchvision.transforms.functional as TF
 
 import os
+import cv2
 import random
 import logging
 import numpy as np
@@ -25,31 +26,22 @@ class OlfactoryBulbDataset(Dataset):
     """
     
     """
-
-    IMAGE_PATH = os.path.join("", "imgs")
-    MASK_PATH = os.path.join("", "masks")
-
-    def __init__(
-        self,
-        data_dir: str,
-        scale = 0.3,
-        isTransform=None,
-    ):
+    def __init__(self, data_dir: str, mode: str, scale = 0.5, is_transform=False):
         """
         Args:
             
         """
-#         if not _PIL_AVAILABLE:  # pragma: no cover
-#             raise ModuleNotFoundError("You want to use `PIL` which is not installed yet.")
-        self.isTransform = isTransform
+        self.is_transform = is_transform
         self.scale = scale
-
+        
+        IMAGE_PATH = os.path.join(mode, "imgs")
+        MASK_PATH = os.path.join(mode, "masks")
         self.data_dir = data_dir
-        self.img_path = os.path.join(self.data_dir, self.IMAGE_PATH)
-        self.mask_path = os.path.join(self.data_dir, self.MASK_PATH)
+        self.img_path = os.path.join(self.data_dir, IMAGE_PATH)
+        self.mask_path = os.path.join(self.data_dir, MASK_PATH)
         self.img_list = self.get_filenames(self.img_path)
         self.mask_list = self.get_filenames(self.mask_path)
-
+        
     def __len__(self):
         return len(self.img_list)
 
@@ -68,16 +60,17 @@ class OlfactoryBulbDataset(Dataset):
         # image = TF.crop(image, i, j, h, w)
         # mask = TF.crop(mask, i, j, h, w)
 
-        # Random horizontal flipping
-        if random.random() > 0.5:
-            image = TF.hflip(image)
-            mask = TF.hflip(mask)
+        if self.is_transform:
+            # Random horizontal flipping
+            if random.random() > 0.5:
+                image = TF.hflip(image)
+                mask = TF.hflip(mask)
 
-        # # Random vertical flipping
-        if random.random() > 0.5:
-            degree = random.randint(-90, 90)
-            image = TF.rotate(image, degree)
-            mask = TF.rotate(mask, degree)
+            # # Random vertical flipping
+            if random.random() > 0.5:
+                degree = random.randint(-90, 90)
+                image = TF.rotate(image, degree)
+                mask = TF.rotate(mask, degree)
 
         # ====================================
         image = np.array(image)
@@ -86,31 +79,34 @@ class OlfactoryBulbDataset(Dataset):
         if len(image.shape) == 2:
             image = np.expand_dims(image, axis=2)
 
+        if len(mask.shape) == 2:
+            mask = np.expand_dims(mask, axis=2)
+
         # HWC to CHW
         image = image.transpose((2, 0, 1))
         if image.max() > 1:
             image = image / 255
+
+        mask = mask.transpose((2, 0, 1))
+        if mask.max() > 1:
+            mask = mask / 255
         
         # Transform to tensor
         image = torch.from_numpy(image).type(torch.FloatTensor)
-        # image = TF.to_tensor(image).type(torch.FloatTensor)
-        # mask = TF.pil_to_tensor(mask).type(torch.LongTensor)
-        mask = torch.from_numpy(mask).type(torch.LongTensor)
-        # mask = torch.as_tensor(np.asarray(mask)).type(torch.LongTensor)
-        # print(np.unique(mask.cpu().detach().numpy()))
+        mask = torch.from_numpy(mask)
+
         return image, mask
 
     def __getitem__(self, idx):
 
-        img = Image.open(self.img_list[idx])
+        image = Image.open(self.img_list[idx])
         mask = Image.open(self.mask_list[idx])
 
-        
-        img, mask = self.transform(img, mask, self.scale)
-        
+        image, mask = self.transform(image, mask, self.scale)
+
         # trms = transforms.Compose([AddGaussianNoise(0., 0.0001)])
         return {
-            'image': img,
+            'image': image,
             'mask': mask
         }
 
