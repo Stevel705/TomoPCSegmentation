@@ -30,3 +30,20 @@ def multiclass_dice_coeff(input: Tensor, target: Tensor, reduce_batch_first: boo
         dice += dice_coeff(input[:, channel, ...], target[:, channel, ...], reduce_batch_first, epsilon)
 
     return dice / input.shape[1]
+
+
+def average_area_error(input: Tensor, target: Tensor, reduce_batch_first: bool = False, epsilon=1e-6):
+    # average_area_error for all batches, or for a single mask
+    assert input.size() == target.size()
+    if input.dim() == 2 and reduce_batch_first:
+        raise ValueError(f'Dice: asked to reduce batch but got tensor without batch dimension (shape {input.shape})')
+
+    if input.dim() == 2 or reduce_batch_first:
+        sub =  torch.sum(input.reshape(-1)) - torch.sum(target.reshape(-1))  
+        return ((sub) / (torch.sum(input.reshape(-1)) + epsilon))
+    else:
+        # compute and average metric for each batch element
+        average_area = 0
+        for i in range(input.shape[0]):
+            average_area += average_area_error(input[i, ...], target[i, ...])
+        return average_area / input.shape[0]

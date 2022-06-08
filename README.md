@@ -103,6 +103,12 @@ trainer.test(test_dataloaders=test)
 
 [Check demo](https://ec2-52-73-12-215.compute-1.amazonaws.com/)
 
+
+### Logging 
+```
+tensorboard --logdir=lightning_logs/
+```
+
 ### Citation   
 ```
 @article{A. Meshkov, A. Khafizov, A. Buzmakov, I. Bukeeva, O. Junemann, M. Fratini, A. Cedola, M. Chukalina, A. Yamaev, G. Gigli, F. Wilde, E. Longo V. Asadchikov S. Saveliev, D. Nikolaev},

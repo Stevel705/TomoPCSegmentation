@@ -26,13 +26,14 @@ class OlfactoryBulbDataset(Dataset):
     """
     
     """
-    def __init__(self, data_dir: str, mode: str, scale = 0.5, is_transform=False):
+    def __init__(self, data_dir: str, mode: str, scale = 0.5, is_transform=False, n_classes=1):
         """
         Args:
             
         """
         self.is_transform = is_transform
         self.scale = scale
+        self.n_classes = n_classes
         
         IMAGE_PATH = os.path.join(mode, "imgs")
         MASK_PATH = os.path.join(mode, "masks")
@@ -48,8 +49,8 @@ class OlfactoryBulbDataset(Dataset):
     def transform(self, image, mask, scale):
         # Resize
         w, h = image.size
-        newW, newH = int(scale * w), int(scale * h)
-
+        newW, newH = int(scale * w), int(scale * h)  
+        # newW, newH = 1024, 1024 
         resize = transforms.Resize(size=(newW, newH))
         image = resize(image)
         mask = resize(mask)
@@ -84,14 +85,15 @@ class OlfactoryBulbDataset(Dataset):
 
         # HWC to CHW
         image = image.transpose((2, 0, 1))
+        mask = mask.transpose((2, 0, 1))
+        
         if image.max() > 1:
             image = image / 255
 
-        mask = mask.transpose((2, 0, 1))
-        # REFACTOR
-        # If multiclass then comment this block  
-        if mask.max() > 1:
-            mask = mask / 255
+        if self.n_classes == 1:
+            # If multiclass then comment this block  
+            if mask.max() > 1:
+                mask = mask / 255
         
         # Transform to tensor
         image = torch.from_numpy(image).type(torch.FloatTensor)

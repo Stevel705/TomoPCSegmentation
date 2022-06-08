@@ -5,3 +5,5 @@ database/
 data/
 lightning_logs/
 version_*/
+images*/
+*.ckpt
